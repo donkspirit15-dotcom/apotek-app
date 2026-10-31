@@ -7,9 +7,9 @@ export default function Login() {
   const [f, setF] = useState({ u: '', p: '' });
   const [err, setErr] = useState('');
   if (user) return <Navigate to="/" replace />;
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (!login(f.u.trim(), f.p)) setErr('Username atau password salah. Coba lagi.');
+    if (!(await login(f.u.trim(), f.p))) setErr('Username atau password salah. Coba lagi.');
   };
   return (
     <div className="grid min-h-screen place-items-center bg-ink p-4">

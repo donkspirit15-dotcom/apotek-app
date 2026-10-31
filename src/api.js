@@ -1,25 +1,36 @@
-// Mock API berbasis localStorage. Minggu 2+: ganti isi fungsi ini dengan fetch() ke backend Express,
-// komponen lain tidak perlu diubah.
-const KEY = 'apotek:';
-const seed = {
-  kategori: [{ id: 1, nama: 'Obat bebas' }, { id: 2, nama: 'Obat keras' }, { id: 3, nama: 'Vitamin' }],
-  supplier: [{ id: 1, nama: 'PT Contoh Farma', telepon: '021-5551234', alamat: 'Jakarta' }],
-  obat: [{ id: 1, kode: 'OBT-001', nama: 'Paracetamol 500 mg', kategori: 'Obat bebas', satuan: 'Strip', harga_beli: 3000, harga_jual: 4500, stok_min: 20 }],
-};
-const read = (t) => {
-  try { const v = localStorage.getItem(KEY + t); if (v) return JSON.parse(v); } catch {}
-  return seed[t] || [];
-};
-const write = (t, d) => { try { localStorage.setItem(KEY + t, JSON.stringify(d)); } catch {} };
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const token = () => localStorage.getItem('apotek:token');
+
+async function req(path, opts = {}) {
+  let res;
+  try {
+    res = await fetch(BASE + path, {
+      ...opts,
+      headers: { 'Content-Type': 'application/json', ...(token() ? { Authorization: `Bearer ${token()}` } : {}) },
+    });
+  } catch {
+    alert('Tidak bisa terhubung ke server. Pastikan backend sudah jalan.');
+    throw new Error('network');
+  }
+  const data = res.status === 204 ? null : await res.json().catch(() => null);
+  if (res.status === 401 && path !== '/auth/login') {
+    localStorage.removeItem('apotek:token');
+    localStorage.removeItem('apotek:user');
+    location.href = '/login';
+    throw new Error('401');
+  }
+  if (!res.ok) {
+    if (path !== '/auth/login') alert(data?.message || 'Terjadi kesalahan.');
+    throw new Error(data?.message || 'error');
+  }
+  return data;
+}
 
 export const api = {
-  list: async (t) => read(t),
-  save: async (t, item) => {
-    const d = read(t);
-    if (item.id) { write(t, d.map((x) => (x.id === item.id ? item : x))); return item; }
-    const n = { ...item, id: Date.now() };
-    write(t, [...d, n]);
-    return n;
-  },
-  remove: async (t, id) => write(t, read(t).filter((x) => x.id !== id)),
+  login: (username, password) => req('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  list: (t) => req('/' + t),
+  save: (t, item) => (item.id
+    ? req(`/${t}/${item.id}`, { method: 'PUT', body: JSON.stringify(item) })
+    : req(`/${t}`, { method: 'POST', body: JSON.stringify(item) })),
+  remove: (t, id) => req(`/${t}/${id}`, { method: 'DELETE' }),
 };

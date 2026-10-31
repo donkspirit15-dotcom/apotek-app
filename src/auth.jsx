@@ -1,26 +1,26 @@
 import { createContext, useContext, useState } from 'react';
+import { api } from './api';
 
 const Ctx = createContext();
 export const useAuth = () => useContext(Ctx);
-
-// Sementara hardcode. Minggu 1 (backend): ganti dengan POST /auth/login + JWT.
-const USERS = [
-  { username: 'owner', password: 'owner123', nama: 'Owner', role: 'owner' },
-  { username: 'kasir', password: 'kasir123', nama: 'Kasir 1', role: 'kasir' },
-];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(localStorage.getItem('apotek:user')); } catch { return null; }
   });
-  const login = (u, p) => {
-    const found = USERS.find((x) => x.username === u && x.password === p);
-    if (!found) return false;
-    const { password, ...safe } = found;
-    setUser(safe);
-    try { localStorage.setItem('apotek:user', JSON.stringify(safe)); } catch {}
-    return true;
+  const login = async (u, p) => {
+    try {
+      const { token, user } = await api.login(u, p);
+      localStorage.setItem('apotek:token', token);
+      localStorage.setItem('apotek:user', JSON.stringify(user));
+      setUser(user);
+      return true;
+    } catch { return false; }
   };
-  const logout = () => { setUser(null); try { localStorage.removeItem('apotek:user'); } catch {} };
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('apotek:token');
+    localStorage.removeItem('apotek:user');
+  };
   return <Ctx.Provider value={{ user, login, logout }}>{children}</Ctx.Provider>;
 }
