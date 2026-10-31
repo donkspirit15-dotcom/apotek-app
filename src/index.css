@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --color-ink: #12302e;
+  --color-brand: #0f766e;
+  --color-paper: #f5f7f6;
+}
+
+body { @apply bg-paper text-slate-800 antialiased; }
+.input { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30; }
+.btn { @apply rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus-visible:ring-2 focus-visible:ring-brand/40; }
+.btn-ghost { @apply rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100; }
