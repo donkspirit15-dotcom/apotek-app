@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './auth';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Pembelian from './pages/Pembelian';
+import Stok from './pages/Stok';
 import { Obat, Supplier, Kategori } from './pages/master';
 
 function Guard({ children }) {
@@ -21,6 +23,8 @@ export default function App() {
             <Route path="obat" element={<Obat />} />
             <Route path="kategori" element={<Kategori />} />
             <Route path="supplier" element={<Supplier />} />
+            <Route path="pembelian" element={<Pembelian />} />
+            <Route path="stok" element={<Stok />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
