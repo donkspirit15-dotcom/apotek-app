@@ -12,8 +12,9 @@ const menu = [
   { to: '/kasir', label: 'Kasir' },
   { to: '/penjualan', label: 'Riwayat penjualan' },
   { to: '/laporan', label: 'Laporan', owner: true },
+  { to: '/opname', label: 'Stok opname', owner: true },
 ];
-const soon = ['Stok opname'];
+const soon = ['Retur penjualan'];
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
