@@ -11,3 +11,10 @@ body { @apply bg-paper text-slate-800 antialiased; }
 .input { @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/30; }
 .btn { @apply rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 focus-visible:ring-2 focus-visible:ring-brand/40; }
 .btn-ghost { @apply rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100; }
+
+@media print {
+  body * { visibility: hidden; }
+  #struk, #struk * { visibility: visible; }
+  #struk { position: fixed; left: 0; top: 0; width: 80mm; padding: 4mm; }
+  .no-print { display: none !important; }
+}

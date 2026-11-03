@@ -9,8 +9,10 @@ const menu = [
   { to: '/supplier', label: 'Supplier' },
   { to: '/pembelian', label: 'Pembelian' },
   { to: '/stok', label: 'Stok obat' },
+  { to: '/kasir', label: 'Kasir' },
+  { to: '/penjualan', label: 'Riwayat penjualan' },
 ];
-const soon = ['Kasir', 'Stok opname', 'Laporan'];
+const soon = ['Stok opname', 'Laporan'];
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
