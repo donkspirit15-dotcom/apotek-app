@@ -48,7 +48,8 @@ export default function Laporan() {
   const metodeData = data ? Object.entries(data.metode).map(([name, value]) => ({ name, value })) : [];
   const kecil = data && data.harian.length <= 31 ? { r: 3 } : false;
   const cards = r ? [
-    ['Omzet', rp(r.omzet)], ['Laba kotor', rp(r.laba)], ['Transaksi', r.transaksi], ['Item terjual', r.item],
+    ['Omzet (bersih)', rp(r.omzet)], ['Laba kotor', rp(r.laba)], ['Transaksi', r.transaksi],
+    ['Item terjual', r.item], ['Diskon diberikan', rp(r.diskon)], ['Retur', rp(r.retur)],
   ] : [];
 
   return (
@@ -65,7 +66,7 @@ export default function Laporan() {
 
       {data && (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {cards.map(([l, v]) => (
               <div key={l} className="rounded-xl border border-slate-200 bg-white p-5">
                 <p className="text-sm text-slate-500">{l}</p>

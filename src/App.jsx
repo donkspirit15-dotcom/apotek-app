@@ -9,6 +9,7 @@ import Kasir from './pages/Kasir';
 import Penjualan from './pages/Penjualan';
 import Laporan from './pages/Laporan';
 import Opname from './pages/Opname';
+import Retur from './pages/Retur';
 import { Obat, Supplier, Kategori } from './pages/master';
 
 function Guard({ children }) {
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="penjualan" element={<Penjualan />} />
             <Route path="laporan" element={<Laporan />} />
             <Route path="opname" element={<Opname />} />
+            <Route path="retur" element={<Retur />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

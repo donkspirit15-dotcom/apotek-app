@@ -12,6 +12,8 @@ export default function Kasir() {
   const [bayar, setBayar] = useState('');
   const [struk, setStruk] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [dVal, setDVal] = useState('');
+  const [dUnit, setDUnit] = useState('Rp');
 
   const load = async () => {
     const [stok, obat] = await Promise.all([api.list('stok'), api.list('obat')]);
@@ -35,15 +37,17 @@ export default function Kasir() {
   const ubah = (id, d) => setCart((c) => c.map((x) => (x.id === id ? { ...x, qty: Math.max(1, Math.min(x.qty + d, x.max)) } : x)));
   const hapus = (id) => setCart((c) => c.filter((x) => x.id !== id));
 
-  const total = cart.reduce((s, x) => s + x.qty * x.harga, 0);
+  const subtotal = cart.reduce((s, x) => s + x.qty * x.harga, 0);
+  const diskon = Math.min(subtotal, Math.max(0, dUnit === '%' ? Math.round((subtotal * Number(dVal || 0)) / 100) : Number(dVal || 0)));
+  const total = subtotal - diskon;
   const dibayar = metode === 'TUNAI' ? Number(bayar) : total;
   const kurang = dibayar < total;
 
   const proses = async () => {
     setBusy(true);
     try {
-      const res = await api.save('penjualan', { metode, bayar: dibayar, items: cart.map((x) => ({ obatId: x.id, qty: x.qty })) });
-      setStruk(res); setCart([]); setBayar(''); load();
+      const res = await api.save('penjualan', { metode, diskon, bayar: dibayar, items: cart.map((x) => ({ obatId: x.id, qty: x.qty })) });
+      setStruk(res); setCart([]); setBayar(''); setDVal(''); load();
     } catch { /* pesan error sudah ditampilkan oleh api.js */ } finally { setBusy(false); }
   };
 
@@ -85,6 +89,11 @@ export default function Kasir() {
             </div>
           </div>
         ))}
+        <div className="flex gap-2">
+          <input type="number" min="0" className="input" placeholder="Diskon (opsional)" value={dVal} onChange={(e) => setDVal(e.target.value)} />
+          <select className="input !w-20" value={dUnit} onChange={(e) => setDUnit(e.target.value)}><option>Rp</option><option>%</option></select>
+        </div>
+        {diskon > 0 && <div className="flex justify-between text-sm text-slate-600"><span>Subtotal {rp(subtotal)}</span><span>Diskon −{rp(diskon)}</span></div>}
         <div className="flex justify-between text-lg font-bold text-ink"><span>Total</span><span>{rp(total)}</span></div>
         <select className="input" value={metode} onChange={(e) => setMetode(e.target.value)}>
           <option value="TUNAI">Tunai</option><option value="QRIS">QRIS</option><option value="DEBIT">Debit</option>
@@ -121,6 +130,7 @@ function Struk({ s, onClose }) {
             <div key={b.nama} className="flex justify-between"><span>{b.nama} ×{b.qty}</span><span>{rp(b.qty * b.harga)}</span></div>
           ))}
           <hr className="my-2" />
+          {s.diskon > 0 && <div className="flex justify-between"><span>Diskon</span><span>−{rp(s.diskon)}</span></div>}
           <div className="flex justify-between font-bold"><span>Total</span><span>{rp(s.total)}</span></div>
           <div className="flex justify-between"><span>Bayar ({s.metode})</span><span>{rp(s.bayar)}</span></div>
           <div className="flex justify-between"><span>Kembalian</span><span>{rp(s.kembalian)}</span></div>

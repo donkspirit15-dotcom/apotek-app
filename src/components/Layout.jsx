@@ -13,8 +13,9 @@ const menu = [
   { to: '/penjualan', label: 'Riwayat penjualan' },
   { to: '/laporan', label: 'Laporan', owner: true },
   { to: '/opname', label: 'Stok opname', owner: true },
+  { to: '/retur', label: 'Retur penjualan', owner: true },
 ];
-const soon = ['Retur penjualan'];
+const soon = ['Mode offline'];
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
