@@ -7,6 +7,7 @@ import Pembelian from './pages/Pembelian';
 import Stok from './pages/Stok';
 import Kasir from './pages/Kasir';
 import Penjualan from './pages/Penjualan';
+import Laporan from './pages/Laporan';
 import { Obat, Supplier, Kategori } from './pages/master';
 
 function Guard({ children }) {
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="stok" element={<Stok />} />
             <Route path="kasir" element={<Kasir />} />
             <Route path="penjualan" element={<Penjualan />} />
+            <Route path="laporan" element={<Laporan />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

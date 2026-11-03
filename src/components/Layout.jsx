@@ -11,8 +11,9 @@ const menu = [
   { to: '/stok', label: 'Stok obat' },
   { to: '/kasir', label: 'Kasir' },
   { to: '/penjualan', label: 'Riwayat penjualan' },
+  { to: '/laporan', label: 'Laporan', owner: true },
 ];
-const soon = ['Stok opname', 'Laporan'];
+const soon = ['Stok opname'];
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
@@ -22,7 +23,7 @@ export default function Layout() {
       <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-ink p-5 text-white transition-transform md:static md:translate-x-0 ${open ? '' : '-translate-x-full'}`}>
         <h1 className="mb-8 text-xl font-bold tracking-tight">Apotek</h1>
         <nav className="space-y-1 text-sm" onClick={() => setOpen(false)}>
-          {menu.map((m) => (
+          {menu.filter((m) => !m.owner || user.role !== 'kasir').map((m) => (
             <NavLink key={m.to} to={m.to} end={m.end}
               className={({ isActive }) => `block rounded-lg px-3 py-2 ${isActive ? 'bg-brand font-semibold' : 'text-teal-50/80 hover:bg-white/10'}`}>
               {m.label}
