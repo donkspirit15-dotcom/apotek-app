@@ -1,10 +1,15 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { useAuth } from '../auth';
+import { enqueue, getQueue, hapusAntrian, syncQueue, uuid } from '../offline';
 
 const rp = (n) => 'Rp ' + Number(n || 0).toLocaleString('id-ID');
+const dalamAntrian = (id) => getQueue().flatMap((x) => x.payload.items).filter((i) => i.obatId === id).reduce((t, i) => t + i.qty, 0);
 const hariIni = () => { const d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()); };
 
 export default function Kasir() {
+  const { user } = useAuth();
+  const [antrian, setAntrian] = useState(getQueue());
   const [produk, setProduk] = useState([]);
   const [q, setQ] = useState('');
   const [cart, setCart] = useState([]);
@@ -22,10 +27,15 @@ export default function Kasir() {
       id: s.id, kode: s.kode, nama: s.nama, satuan: s.satuan,
       harga: obat.find((o) => o.id === s.id)?.harga_jual ?? 0,
       // hanya stok dari batch yang belum expired yang bisa dijual
-      max: s.batches.filter((b) => new Date(b.expired).getTime() >= h).reduce((t, b) => t + b.qty, 0),
+      max: Math.max(0, s.batches.filter((b) => new Date(b.expired).getTime() >= h).reduce((t, b) => t + b.qty, 0) - dalamAntrian(s.id)),
     })));
   };
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const f = () => { setAntrian(getQueue()); load(); };
+    window.addEventListener('antrian', f);
+    return () => window.removeEventListener('antrian', f);
+  }, []);
 
   const shown = produk.filter((p) => (p.kode + p.nama).toLowerCase().includes(q.toLowerCase()));
   const add = (p) => setCart((c) => {
@@ -45,10 +55,24 @@ export default function Kasir() {
 
   const proses = async () => {
     setBusy(true);
+    const payload = {
+      ref: uuid(), tanggal: new Date().toISOString(), metode, diskon, bayar: dibayar,
+      items: cart.map((x) => ({ obatId: x.id, qty: x.qty })),
+    };
     try {
-      const res = await api.save('penjualan', { metode, diskon, bayar: dibayar, items: cart.map((x) => ({ obatId: x.id, qty: x.qty })) });
-      setStruk(res); setCart([]); setBayar(''); setDVal(''); load();
-    } catch { /* pesan error sudah ditampilkan oleh api.js */ } finally { setBusy(false); }
+      setStruk(await api.save('penjualan', payload, { diam: true }));
+    } catch (e) {
+      if (!e.offline) { alert(e.message); setBusy(false); return; }
+      // tidak ada koneksi: simpan ke antrian, dikirim otomatis saat online lagi
+      const struk = {
+        id: 'OFFLINE', tanggal: payload.tanggal, kasir: user?.nama ?? '', metode, total, diskon, bayar: dibayar,
+        kembalian: Math.max(0, dibayar - total), offline: true,
+        items: cart.map((x) => ({ id: x.id, obatId: x.id, obat: { nama: x.nama }, qty: x.qty, harga: x.harga })),
+      };
+      enqueue(payload, struk);
+      setStruk(struk);
+    }
+    setCart([]); setBayar(''); setDVal(''); setBusy(false); load();
   };
 
   return (
@@ -109,6 +133,25 @@ export default function Kasir() {
         </button>
       </aside>
 
+      {antrian.length > 0 && (
+        <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-4 lg:col-span-3">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-amber-900">Penjualan menunggu sinkron ({antrian.length})</p>
+            <button className="btn-ghost ml-auto" onClick={() => syncQueue()}>Sinkronkan sekarang</button>
+          </div>
+          {antrian.map((x) => (
+            <div key={x.payload.ref} className="flex flex-wrap items-center gap-3 text-sm">
+              <span>{new Date(x.payload.tanggal).toLocaleTimeString('id-ID')} · {rp(x.struk.total)} · {x.struk.items.map((i) => `${i.obat.nama} ×${i.qty}`).join(', ')}</span>
+              {x.error && <span className="text-red-600">Gagal: {x.error}</span>}
+              {x.error && (
+                <button className="btn-ghost ml-auto text-red-600"
+                  onClick={() => confirm('Hapus dari antrian? Transaksi ini tidak akan tercatat di server.') && hapusAntrian(x.payload.ref)}>Hapus</button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {struk && <Struk s={struk} onClose={() => setStruk(null)} />}
     </div>
   );
@@ -124,7 +167,7 @@ function Struk({ s, onClose }) {
       <div className="w-full max-w-sm rounded-2xl bg-white p-6" onClick={(e) => e.stopPropagation()}>
         <div id="struk" className="space-y-1 text-sm">
           <p className="text-center text-lg font-bold">Apotek</p>
-          <p className="text-center text-xs text-slate-500">#{s.id} · {new Date(s.tanggal).toLocaleString('id-ID')} · {s.kasir}</p>
+          <p className="text-center text-xs text-slate-500">{s.offline ? 'OFFLINE' : `#${s.id}`} · {new Date(s.tanggal).toLocaleString('id-ID')} · {s.kasir}</p>
           <hr className="my-2" />
           {baris.map((b) => (
             <div key={b.nama} className="flex justify-between"><span>{b.nama} ×{b.qty}</span><span>{rp(b.qty * b.harga)}</span></div>
@@ -135,6 +178,7 @@ function Struk({ s, onClose }) {
           <div className="flex justify-between"><span>Bayar ({s.metode})</span><span>{rp(s.bayar)}</span></div>
           <div className="flex justify-between"><span>Kembalian</span><span>{rp(s.kembalian)}</span></div>
           <p className="pt-2 text-center text-xs text-slate-500">Terima kasih</p>
+          {s.offline && <p className="text-center text-xs text-amber-700">Belum tersinkron ke server</p>}
         </div>
         <div className="no-print mt-4 flex justify-end gap-2">
           <button className="btn-ghost" onClick={onClose}>Tutup</button>

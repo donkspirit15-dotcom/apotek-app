@@ -21,6 +21,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     localStorage.removeItem('apotek:token');
     localStorage.removeItem('apotek:user');
+    if ('caches' in window) caches.delete('api-data'); // data offline milik user sebelumnya
   };
   return <Ctx.Provider value={{ user, login, logout }}>{children}</Ctx.Provider>;
 }
