@@ -26,7 +26,6 @@ export default function Login() {
         </label>
         {err && <p className="text-sm text-red-600">{err}</p>}
         <button className="btn w-full">Masuk</button>
-        <p className="text-xs text-slate-400">Demo: owner / owner123 atau kasir / kasir123</p>
       </form>
     </div>
   );

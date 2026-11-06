@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth';
 import { jumlahAntrian, syncQueue } from '../offline';
+import GantiPassword from './GantiPassword';
 
 const menu = [
   { to: '/', label: 'Dashboard', end: true },
@@ -15,12 +16,14 @@ const menu = [
   { to: '/laporan', label: 'Laporan', owner: true },
   { to: '/opname', label: 'Stok opname', owner: true },
   { to: '/retur', label: 'Retur penjualan', owner: true },
+  { to: '/kartu', label: 'Kartu stok', owner: true },
+  { to: '/users', label: 'Pengguna', owner: true, admin: true },
 ];
-const soon = ['Mode offline'];
 
 export default function Layout() {
   const [open, setOpen] = useState(false);
   const { user, logout } = useAuth();
+  const [pw, setPw] = useState(false);
   const [online, setOnline] = useState(navigator.onLine);
   const [antri, setAntri] = useState(jumlahAntrian());
   const [pasang, setPasang] = useState(null);
@@ -46,14 +49,12 @@ export default function Layout() {
       <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-ink p-5 text-white transition-transform md:static md:translate-x-0 ${open ? '' : '-translate-x-full'}`}>
         <h1 className="mb-8 text-xl font-bold tracking-tight">Apotek</h1>
         <nav className="space-y-1 text-sm" onClick={() => setOpen(false)}>
-          {menu.filter((m) => !m.owner || user.role !== 'kasir').map((m) => (
+          {menu.filter((m) => (!m.owner || user.role !== 'kasir') && (!m.admin || user.role === 'owner')).map((m) => (
             <NavLink key={m.to} to={m.to} end={m.end}
               className={({ isActive }) => `block rounded-lg px-3 py-2 ${isActive ? 'bg-brand font-semibold' : 'text-teal-50/80 hover:bg-white/10'}`}>
               {m.label}
             </NavLink>
           ))}
-          <p className="px-3 pb-1 pt-6 text-xs text-teal-200/60">Segera hadir</p>
-          {soon.map((s) => <span key={s} className="block px-3 py-2 text-teal-100/40">{s}</span>)}
         </nav>
       </aside>
       {open && <div className="fixed inset-0 z-20 bg-black/40 md:hidden" onClick={() => setOpen(false)} />}
@@ -72,9 +73,11 @@ export default function Layout() {
             )}
             <span className="text-sm text-slate-600">{user.nama} · {user.role}</span>
           </div>
+          <button onClick={() => setPw(true)} className="btn-ghost">Ganti password</button>
           <button onClick={logout} className="btn-ghost">Keluar</button>
         </header>
         <main className="p-4 md:p-8"><Outlet /></main>
+        {pw && <GantiPassword onClose={() => setPw(false)} />}
       </div>
     </div>
   );
